@@ -25,42 +25,55 @@ class TablesController extends Controller
     // GET /api/tables/map
     public function getFullMap()
     {
-        return Table::with(['location.status'])->get();
+        $tables = Table::with(['location.status'])->get();
+
+        return $tables->map(function ($table) {
+            return [
+                'table_number' => $table->table_number ?? $table->code ?? $table->id,
+                'location_code' => $table->location?->location_code ?? 'Unassigned',
+                'status' => $table->location?->status?->status ?? 'Unknown',
+            ];
+        });
     }
 
     // POST /api/tables/assign
-    public function assignLocation(Request $request)
+    public function updateTableMapping(Request $request)
     {
-        $request->validate([
-            'table_id' => 'required|exists:tables,id',
-            'table_location_id' => 'required|exists:table_locations,id',
+        $validated = $request->validate([
+            'table_number' => 'nullable|string|exists:tables,table_number',
+            'location_code' => 'nullable|string|exists:table_locations,location_code',
+            'status' => 'nullable|string|in:empty,reserved,occupied,out_of_order,needs_clearing',
         ]);
 
-        TableLocationAssignment::updateOrCreate(
-            ['table_id' => $request->table_id],
-            ['table_location_id' => $request->table_location_id]
-        );
+        // Assign location to table if both are provided
+        if (!empty($validated['table_number']) && !empty($validated['location_code'])) {
+            $table = Table::where('table_number', $validated['table_number'])->first();
+            $location = TableLocation::where('location_code', $validated['location_code'])->first();
 
-        return response()->json(['message' => 'Table location assigned successfully.']);
-    }
-
-    // PUT /api/tables/location/{id}/status
-    public function updateLocationStatus($id, Request $request)
-    {
-        $request->validate([
-            'status' => 'required|in:empty,reserved,occupied,out_of_order,needs_clearing'
-        ]);
-
-        $statusId = TableStatus::where('status', $request->status)->value('id');
-
-        if (!$statusId) {
-            return response()->json(['error' => 'Invalid status value'], 422);
+            if ($table && $location) {
+                TableLocationAssignment::updateOrCreate(
+                    ['table_id' => $table->id],
+                    ['table_location_id' => $location->id]
+                );
+            }
         }
 
-        $location = TableLocation::findOrFail($id);
-        $location->status_id = $statusId;
-        $location->save();
+        // Update status on a location if both status and location_code provided
+        if (!empty($validated['status']) && !empty($validated['location_code'])) {
+            $location = TableLocation::where('location_code', $validated['location_code'])->first();
 
-        return response()->json(['message' => 'Location status updated.', 'location' => $location]);
+            if ($location) {
+                $statusId = TableStatus::where('status', $validated['status'])->value('id');
+
+                if (!$statusId) {
+                    return response()->json(['error' => 'Invalid status value'], 422);
+                }
+
+                $location->status_id = $statusId;
+                $location->save();
+            }
+        }
+
+        return response()->json(['message' => 'Update successful.']);
     }
 }

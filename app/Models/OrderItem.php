@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 use App\Models\Order;
 use App\Models\MenuItem;
 
 class OrderItem extends Model
 {
+    use SoftDeletes;
+
     //connections
     public function order()
     {
@@ -23,7 +27,7 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Bill::class);
     }
-    
+
     //calculations
 
 }

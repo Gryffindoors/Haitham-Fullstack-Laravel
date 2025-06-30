@@ -50,6 +50,21 @@ class AuthController extends Controller
     // 🙋‍♂️ Get current user info
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user()->load('role', 'staff.timetable');
+
+        return response()->json([
+            'id' => $user->id,
+            'username' => $user->username,
+            'role' => $user->role->role ?? null,
+
+            // Staff flattened fields
+            'first_name' => $user->staff?->first_name,
+            'last_name' => $user->staff?->last_name,
+            'first_name_ar' => $user->staff?->first_name_ar,
+            'last_name_ar' => $user->staff?->last_name_ar,
+            'image' => $user->staff?->image_url,
+            'timetable' => $user->staff?->timetable?->name,
+            'timetable_ar' => $user->staff?->timetable?->name_ar,
+        ]);
     }
 }

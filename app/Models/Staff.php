@@ -25,6 +25,11 @@ class Staff extends Model
         'updated_by'
     ];
 
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
     public function salaries()
     {
         return $this->hasMany(Salary::class);
@@ -54,4 +59,16 @@ class Staff extends Model
     {
         return $value ? asset($value) : null;
     }
+
+    public function timetable()
+    {
+        return $this->belongsTo(TimeTable::class);
+    }
+
+    public function phones()
+    {
+        return $this->hasMany(StaffPhone::class);
+    }
+
+
 }

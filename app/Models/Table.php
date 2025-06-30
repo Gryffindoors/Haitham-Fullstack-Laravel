@@ -11,6 +11,13 @@ class Table extends Model
 
     public function location()
     {
-        return $this->belongsTo(TableLocation::class);
+        return $this->hasOneThrough(
+            TableLocation::class,
+            TableLocationAssignment::class,
+            'table_id', // foreign key on assignments
+            'id',       // local key on locations
+            'id',       // local key on tables
+            'table_location_id' // foreign key on assignments
+        );
     }
 }

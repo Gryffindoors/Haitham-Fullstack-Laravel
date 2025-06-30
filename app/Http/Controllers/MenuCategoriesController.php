@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\menu_categories;
+use App\Models\MenuCategory;
 use Illuminate\Http\Request;
 
 class MenuCategoriesController extends Controller
@@ -12,8 +12,25 @@ class MenuCategoriesController extends Controller
      */
     public function index()
     {
-        //
+        $categories = MenuCategory::with('parent') // assumes relation defined
+            ->orderBy('name')
+            ->get()
+            ->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'name_ar' => $category->name_ar,
+                    'parent' => $category->parent ? [
+                        'name' => $category->parent->name,
+                        'name_ar' => $category->parent->name_ar,
+                    ] : null,
+                ];
+            });
+
+        return response()->json($categories);
     }
+
+
 
     /**
      * Show the form for creating a new resource.
@@ -34,7 +51,7 @@ class MenuCategoriesController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(menu_categories $menu_categories)
+    public function show(MenuCategory $menu_categories)
     {
         //
     }
@@ -42,7 +59,7 @@ class MenuCategoriesController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(menu_categories $menu_categories)
+    public function edit(MenuCategory $menu_categories)
     {
         //
     }
@@ -50,7 +67,7 @@ class MenuCategoriesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, menu_categories $menu_categories)
+    public function update($request, $menu_categories)
     {
         //
     }
@@ -58,7 +75,7 @@ class MenuCategoriesController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(menu_categories $menu_categories)
+    public function destroy(MenuCategory $menu_categories)
     {
         //
     }

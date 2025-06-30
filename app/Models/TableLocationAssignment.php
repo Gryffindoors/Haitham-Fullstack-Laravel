@@ -8,7 +8,7 @@ use App\Models\TableLocation;
 
 class TableLocationAssignment extends Model
 {
-    protected $table = 'table_locations_assignment';
+    protected $table = 'table_location_assignments';
     protected $fillable = ['table_id', 'table_location_id'];
 
     public function staff()

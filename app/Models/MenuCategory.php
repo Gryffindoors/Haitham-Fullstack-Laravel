@@ -12,5 +12,9 @@ class MenuCategory extends Model
     {
         return $this->hasMany(MenuItem::class);
     }
-}
 
+    public function parent()
+    {
+        return $this->belongsTo(MenuCategory::class, 'parent_id');
+    }
+}

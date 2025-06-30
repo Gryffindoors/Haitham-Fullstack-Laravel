@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Orders
     Route::prefix('orders')->group(function () {
+        Route::get('/', [OrdersController::class, 'index']); 
         Route::post('/', [OrdersController::class, 'store']);
         Route::get('/{id}', [OrdersController::class, 'show']);
     });
@@ -50,14 +51,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/tables/usage', [ReportsController::class, 'tableUsage']);
     });
 
+    // Staff & User Management (Owner Only)
+    Route::prefix('staff')->middleware(['auth:sanctum', 'role:owner'])->group(function () {
+        Route::get('/', [StaffController::class, 'index']);         // Get full staff listing
+        Route::post('/', [StaffController::class, 'store']);        // Create new staff member
+        Route::put('/{staff}', [StaffController::class, 'update']); // Update staff member
+        Route::delete('/{staff}', [StaffController::class, 'destroy']); // Delete staff
 
-
-    // Staff (Admin only later)
-    Route::prefix('staff')->middleware('role:owner')->group(function () {
-        Route::get('/', [StaffController::class, 'index']);
-        Route::post('/', [StaffController::class, 'store']);
+        // Dropdown helpers
+        Route::get('/roles/list', [StaffController::class, 'roleList']);   // List of user roles
+        Route::get('/list', [StaffController::class, 'staffList']);        // List of staff IDs and names
+        Route::get('/department', [StaffController::class, 'departmentList']);
     });
-
 
     // Inventory
     Route::prefix('inventory')->group(function () {
@@ -71,18 +76,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [OperatingCostController::class, 'store']);
         Route::put('/{id}', [OperatingCostController::class, 'update']);
         Route::delete('/{id}', [OperatingCostController::class, 'destroy']);
-    });
-
-    //user control
-    Route::prefix('users')->middleware(['auth:sanctum', 'role:owner'])->group(function () {
-        Route::get('/', [UsersController::class, 'index']);
-        Route::post('/', [UsersController::class, 'store']);
-        Route::put('/{id}', [UsersController::class, 'update']);
-        Route::delete('/{id}', [UsersController::class, 'destroy']);
-
-        // Dropdown helpers
-        Route::get('/roles/list', [UsersController::class, 'roleList']);
-        Route::get('/staff/list', [UsersController::class, 'staffList']);
     });
 
     //menu items
@@ -103,11 +96,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Table Management
-    // Table Management
     Route::prefix('tables')->middleware('role:owner,supervisor')->group(function () {
         Route::get('/', [TablesController::class, 'index']); // List logical groups (table numbers)
         Route::get('/map', [TablesController::class, 'getFullMap']); // Group + assigned locations
-        Route::post('/assign', [TablesController::class, 'assignLocation']); // Assign physical locations to group
+        Route::post('/assign', [TablesController::class, 'updateTableMapping']); // Assign physical locations to group
 
         // Physical seat controls (table_locations)
         Route::get('/locations', [TablesController::class, 'getLocations']); // List all physical seats
