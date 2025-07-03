@@ -13,8 +13,29 @@ class MenuItemsController extends Controller
      */
     public function index()
     {
-        //
+        $items = MenuItem::with('category') // if you have category relation
+            ->orderBy('name')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'name_ar' => $item->name_ar,
+                    'description' => $item->description,
+                    'description_ar' => $item->description_ar,
+                    'price' => $item->price,
+                    'image_url' => $item->image_url,
+                    'category' => $item->category ? [
+                        'id' => $item->category->id,
+                        'name' => $item->category->name,
+                        'name_ar' => $item->category->name_ar,
+                    ] : null,
+                ];
+            });
+
+        return response()->json($items);
     }
+
 
     /**
      * Show the form for creating a new resource.

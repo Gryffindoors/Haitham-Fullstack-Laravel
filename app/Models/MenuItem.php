@@ -26,4 +26,8 @@ class MenuItem extends Model
     {
         return $value ? asset($value) : null;
     }
+    public function category()
+    {
+        return $this->belongsTo(MenuCategory::class, 'category_id');
+    }
 }

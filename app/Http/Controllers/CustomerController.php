@@ -12,8 +12,18 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        //
+        $customers = Customer::orderBy('first_name')->get();
+
+        return response()->json($customers->map(function ($c) {
+            return [
+                'id' => $c->id,
+                'first_name' => $c->first_name,
+                'last_name' => $c->last_name,
+                'phone_number' => $c->phone_number,
+            ];
+        }));
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -28,8 +38,18 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'nullable|string|max:100',
+            'phone_number' => 'nullable|string|max:30|unique:customers,phone_number',
+            'address' => 'nullable|string|max:100',
+        ]);
+
+        $customer = Customer::create($data);
+
+        return response()->json($customer, 201);
     }
+
 
     /**
      * Display the specified resource.
@@ -50,16 +70,31 @@ class CustomerController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, customer $customer)
+    public function update(Request $request, $id)
     {
-        //
+        $customer = Customer::findOrFail($id);
+
+        $data = $request->validate([
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'nullable|string|max:100',
+            'phone_number' => 'nullable|string|max:30|unique:customers,phone_number,' . $id,
+            'address' => 'nullable|string|max:100',
+        ]);
+
+        $customer->update($data);
+
+        return response()->json($customer);
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(customer $customer)
+    public function destroy($id)
     {
-        //
+        $customer = Customer::findOrFail($id);
+        $customer->delete(); // hard delete
+
+        return response()->json(['message' => 'Customer deleted']);
     }
 }

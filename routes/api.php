@@ -13,7 +13,9 @@ use App\Http\Controllers\DeductionRuleController;
 use App\Http\Controllers\OperatingCostController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\TablesController;
-use App\Http\Controllers\UsersController;
+use App\Http\Controllers\OrderStatusController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\OrderTypeController;
 
 
 
@@ -26,10 +28,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Orders
     Route::prefix('orders')->group(function () {
-        Route::get('/', [OrdersController::class, 'index']); 
+        Route::get('/', [OrdersController::class, 'index']);
         Route::post('/', [OrdersController::class, 'store']);
+        Route::get('/status', [OrderStatusController::class, 'index']);
         Route::get('/{id}', [OrdersController::class, 'show']);
     });
+
+    Route::get('/order-types', [OrderTypeController::class, 'index']);
+
+
+    //Customers
+    Route::prefix('customers')->group(function () {
+        Route::get('/', [CustomerController::class, 'index']);
+        Route::post('/', [CustomerController::class, 'store']);
+        Route::put('/{id}', [CustomerController::class, 'update']);
+        Route::delete('/{id}', [CustomerController::class, 'destroy']);
+    });
+
 
     // Billing & Payments
     Route::prefix('bills')->middleware('role:owner,supervisor,cashier')->group(function () {
@@ -79,14 +94,19 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     //menu items
-    Route::prefix('menu')->middleware('role:owner,supervisor')->group(function () {
+    // Routes accessible to all authenticated users
+    Route::prefix('menu')->middleware('auth:sanctum')->group(function () {
         Route::get('/items', [MenuItemsController::class, 'index']);
-        Route::post('/items', [MenuItemsController::class, 'store']);
-        Route::put('/items/{id}', [MenuItemsController::class, 'update']);
-        Route::delete('/items/{id}', [MenuItemsController::class, 'destroy']);
-
         Route::get('/categories', [MenuCategoriesController::class, 'index']);
     });
+
+    // Routes restricted to owner and supervisor
+    Route::prefix('menu')->middleware('role:owner,supervisor')->group(function () {
+        Route::post('/items', [MenuItemsController::class, 'store']);
+        Route::put('/items/{menuItem}', [MenuItemsController::class, 'update']);
+        Route::delete('/items/{menuItem}', [MenuItemsController::class, 'destroy']);
+    });
+
 
     //salary
     Route::prefix('salaries')->middleware('role:owner')->group(function () {

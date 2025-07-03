@@ -18,4 +18,6 @@ class Customer extends Model
     {
         return $this->hasMany(Bill::class);
     }
+
+    protected $fillable = ['first_name', 'last_name', 'phone_number', 'address'];
 }
