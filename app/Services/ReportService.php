@@ -44,7 +44,8 @@ class ReportService
                 ->sum('amount');
 
             $results[] = [
-                'month' => $date->format('Y-m'),
+                'month' => (int) $date->format('m'),
+                'year' => (int) $date->format('Y'),
                 'sales' => round($paidTotal, 2),
                 'costs' => round($costs, 2),
                 'profit' => round($paidTotal - $costs, 2),

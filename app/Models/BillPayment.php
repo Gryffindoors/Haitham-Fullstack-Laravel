@@ -9,6 +9,14 @@ use App\Models\PaymentMethod;
 
 class BillPayment extends Model
 {
+    protected $fillable = [
+        'payment_method_id',
+        'amount',
+        'transaction_number',
+        'paid_at',
+        'created_by',
+    ];
+
     public function bill()
     {
         return $this->belongsTo(Bill::class);
@@ -18,5 +26,4 @@ class BillPayment extends Model
     {
         return $this->belongsTo(PaymentMethod::class);
     }
-    
 }

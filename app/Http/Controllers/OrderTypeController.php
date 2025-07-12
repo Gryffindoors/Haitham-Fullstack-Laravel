@@ -14,3 +14,4 @@ class OrderTypeController extends Controller
         return response()->json($types);
     }
 }
+ 

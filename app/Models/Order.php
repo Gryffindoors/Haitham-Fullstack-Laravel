@@ -17,7 +17,7 @@ class Order extends Model
 
     public function orderItems()
     {
-        return $this->hasMany(OrderItem::class)->withTrashed();
+        return $this->hasMany(OrderItem::class);
     }
 
     public function bills()
@@ -30,8 +30,19 @@ class Order extends Model
         return $this->belongsTo(OrderStatus::class);
     }
 
-    public function type()
-    {
-        return $this->belongsTo(OrderType::class);
-    }
+   public function type()
+{
+    return $this->belongsTo(OrderType::class, 'order_type_id');
+}
+
+
+    protected $fillable = [
+        'customer_id',
+        'order_type_id',
+        'table_id',
+        'status_id',
+        'ordered_at',
+        'created_by',
+        'total',
+    ];
 }

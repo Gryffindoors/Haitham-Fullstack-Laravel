@@ -28,7 +28,7 @@ class Bill extends Model
 
     public function orderItems()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->hasMany(OrderItem::class, 'bill_id');
     }
 
     public function paymentMethod()
@@ -53,13 +53,16 @@ class Bill extends Model
         return $this->total_with_charges + $this->tips - $this->paid_amount;
     }
 
-
     protected $fillable = [
+        'customer_id',
+        'payment_method_id',
         'total_cost',
         'tax',
         'service_charge',
         'tips',
+        'created_by',
     ];
+
 
     public function getStatusAttribute()
     {

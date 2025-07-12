@@ -16,7 +16,8 @@ use App\Http\Controllers\TablesController;
 use App\Http\Controllers\OrderStatusController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderTypeController;
-
+use App\Http\Controllers\StripeController;
+use App\Http\Controllers\PaymentMethodController;
 
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -32,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [OrdersController::class, 'store']);
         Route::get('/status', [OrderStatusController::class, 'index']);
         Route::get('/{id}', [OrdersController::class, 'show']);
+        Route::delete('/{id}', [OrdersController::class, 'destroy']);
     });
 
     Route::get('/order-types', [OrderTypeController::class, 'index']);
@@ -48,9 +50,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Billing & Payments
     Route::prefix('bills')->middleware('role:owner,supervisor,cashier')->group(function () {
-        Route::post('{id}/pay', [BillsController::class, 'pay']);
-        Route::get('/{id}', [BillsController::class, 'show']);
+        Route::get('/', [BillsController::class, 'index']);               // All bills (owner/supervisor only)
+        Route::get('/methods', [PaymentMethodController::class, 'index']);
+        Route::get('/today', [BillsController::class, 'today']);          // Today's bills (all roles)
+        Route::post('/create-empty', [BillsController::class, 'createEmpty']);
+        Route::post('/{id}/attach-items', [BillsController::class, 'attachItems']);
+
+        Route::post('/', [BillsController::class, 'store']);              // ✅ Create new bill (supports split/full)
+
+        Route::get('/{id}', [BillsController::class, 'show']);            // View single bill
+        Route::post('/{id}/pay', [BillsController::class, 'pay']);        // Add payment
+        Route::put('/{id}', [BillsController::class, 'update']);          // Edit bill (totals/tips)
+
     });
+
+    Route::post('/stripe/create-checkout-session', [StripeController::class, 'createSession']);
+    Route::get('/stripe/verify-session', [StripeController::class, 'verifySession']);
 
     // Reports
     Route::prefix('reports')->middleware('role:owner,supervisor')->group(function () {
@@ -64,6 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/staff/discipline', [ReportsController::class, 'disciplineRanking']);
         Route::get('/costs/breakdown', [ReportsController::class, 'operatingCostBreakdown']);
         Route::get('/tables/usage', [ReportsController::class, 'tableUsage']);
+        Route::put('/{id}', [BillsController::class, 'update']);
     });
 
     // Staff & User Management (Owner Only)

@@ -62,6 +62,18 @@ class OrdersController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. If 'order_type' name is sent, resolve it to 'order_type_id'
+        if ($request->has('order_type') && !$request->has('order_type_id')) {
+            $orderType = \App\Models\OrderType::where('type', $request->input('order_type'))->first();
+
+            if (!$orderType) {
+                return response()->json(['error' => 'Invalid order type'], 422);
+            }
+
+            $request->merge(['order_type_id' => $orderType->id]);
+        }
+
+        // 2. Proceed with normal validation and processing
         $data = $request->validate([
             'customer_id' => 'nullable|exists:customers,id',
             'order_type_id' => 'required|exists:order_types,id',
@@ -72,7 +84,6 @@ class OrdersController extends Controller
             'items.*.menu_item_id' => 'required|exists:menu_items,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
-
         $order = Order::create([
             'customer_id' => $data['customer_id'] ?? null,
             'order_type_id' => $data['order_type_id'],
@@ -80,7 +91,7 @@ class OrdersController extends Controller
             'status_id' => $data['status_id'],
             'ordered_at' => $data['ordered_at'] ?? now(),
             'created_by' => auth()->id(),
-            'total' => 0, // placeholder
+            'total' => 0,
         ]);
 
         $total = 0;
@@ -101,8 +112,9 @@ class OrdersController extends Controller
 
         $order->update(['total' => $total]);
 
-        return $this->show($order->id); // return full response
+        return $this->show($order->id);
     }
+
 
 
     /**
@@ -116,6 +128,8 @@ class OrdersController extends Controller
             'customer:id,first_name,last_name',
             'orderItems.menuItem:id,name,name_ar'
         ])->findOrFail($id);
+
+        $firstBillId = $order->orderItems->firstWhere('bill_id', '!=', null)?->bill_id;
 
         return response()->json([
             'id' => $order->id,
@@ -133,6 +147,7 @@ class OrdersController extends Controller
             'created_by' => $order->created_by,
             'updated_by' => $order->updated_by,
             'total' => $order->total,
+            'bill_id' => $firstBillId, // ✅ New top-level field
             'items' => $order->orderItems->map(function ($item) {
                 return [
                     'id' => $item->id,
@@ -142,10 +157,12 @@ class OrdersController extends Controller
                     'quantity' => $item->quantity,
                     'unit_price' => $item->unit_price,
                     'total_price' => $item->total_price,
+                    'bill_id' => $item->bill_id, // ✅ bill_id per item
                 ];
             })
         ]);
     }
+
 
 
     /**
@@ -182,7 +199,7 @@ class OrdersController extends Controller
             'ordered_at' => $data['ordered_at'] ?? now(),
             'updated_by' => auth()->id(),
         ]);
-
+ 
         $order->orderItems()->delete(); // reset items
 
         $total = 0;
@@ -211,7 +228,7 @@ class OrdersController extends Controller
      */
     public function destroy(Order $orders)
     {
-        $orders->orderItems()->delete(); // soft-delete items
+        $orders->orderItems()->forceDelete(); // soft-delete items
         $orders->delete(); // soft-delete order
 
         return response()->json(['message' => 'Order deleted']);

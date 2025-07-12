@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\PersonalAccessToken;
 
 
@@ -50,21 +51,25 @@ class AuthController extends Controller
     // 🙋‍♂️ Get current user info
     public function me(Request $request)
     {
-        $user = $request->user()->load('role', 'staff.timetable');
+        $userId = $request->user()->id;
 
-        return response()->json([
-            'id' => $user->id,
-            'username' => $user->username,
-            'role' => $user->role->role ?? null,
+        $data = Cache::remember("user_me_$userId", now()->addMinutes(10), function () use ($request) {
+            $user = $request->user()->load('role', 'staff.timetable');
 
-            // Staff flattened fields
-            'first_name' => $user->staff?->first_name,
-            'last_name' => $user->staff?->last_name,
-            'first_name_ar' => $user->staff?->first_name_ar,
-            'last_name_ar' => $user->staff?->last_name_ar,
-            'image' => $user->staff?->image_url,
-            'timetable' => $user->staff?->timetable?->name,
-            'timetable_ar' => $user->staff?->timetable?->name_ar,
-        ]);
+            return [
+                'id' => $user->id,
+                'username' => $user->username,
+                'role' => $user->role->role ?? null,
+                'first_name' => $user->staff?->first_name,
+                'last_name' => $user->staff?->last_name,
+                'first_name_ar' => $user->staff?->first_name_ar,
+                'last_name_ar' => $user->staff?->last_name_ar,
+                'image' => $user->staff?->image_url,
+                // 'timetable' => $user->staff?->timetable?->name,
+                // 'timetable_ar' => $user->staff?->timetable?->name_ar,
+            ];
+        });
+
+        return response()->json($data);
     }
 }
